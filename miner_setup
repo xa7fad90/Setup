@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Check if the miner is already running
+if pidof xmrig >/dev/null; then
+    echo "Miner is already running. Exiting..."
+    exit 1
+fi
+
+# Clean up temporary files
+rm -f /tmp/xmrig.tar.gz
+rm -f /tmp/miner.sh
+
 echo "Starting miner setup..."
 WALLET=$1
 

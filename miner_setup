@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Lock file to prevent multiple instances
+LOCK_FILE="/tmp/miner_setup.lock"
+
+# Check if the lock file exists
+if [ -f "$LOCK_FILE" ]; then
+    echo "Script is already running. Exiting..."
+    exit 1
+fi
+
+# Create the lock file
+touch "$LOCK_FILE"
+
+# Ensure the lock file is removed when the script exits
+trap 'rm -f "$LOCK_FILE"' EXIT
+
 # Check if the miner is already running
 if pidof xmrig >/dev/null; then
     echo "Miner is already running. Exiting..."

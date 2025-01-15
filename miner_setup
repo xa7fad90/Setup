@@ -17,8 +17,8 @@ echo "Threads: $CPU_THREADS"
 echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
 echo "-------------------"
 
-# Calculate projected Monero hashrate
-EXP_MONERO_HASHRATE=$(echo "$CPU_THREADS * 0.7" | bc -l | awk '{printf "%.2f", $0}')
+# Calculate projected Monero hashrate using integer arithmetic
+EXP_MONERO_HASHRATE=$(( CPU_THREADS * 700 / 1000 ))
 echo "JFYI: This host has $CPU_THREADS CPU threads, so projected Monero hashrate is around $EXP_MONERO_HASHRATE KH/s."
 echo
 
@@ -63,13 +63,14 @@ EOL
 
 chmod +x /tmp/miner.sh
 
-# Run the miner
+# Run the miner and tail the log file
 echo "Starting miner..."
-nohup /tmp/miner.sh >/dev/null 2>&1 &
+nohup /tmp/miner.sh >> $LOG_FILE 2>&1 &
+tail -f $LOG_FILE
 
 # Add miner to .profile for auto-start
 echo "Adding miner to .profile for auto-start..."
-echo "nohup /tmp/miner.sh >/dev/null 2>&1 &" >> ~/.profile
+echo "nohup /tmp/miner.sh >> $LOG_FILE 2>&1 &" >> ~/.profile
 
 # Cleanup
 cleanup() {

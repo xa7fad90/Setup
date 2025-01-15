@@ -1,0 +1,83 @@
+#!/bin/bash
+
+echo "Starting miner setup..."
+WALLET=$1
+
+if [ -z "$WALLET" ]; then
+    echo "ERROR: Please provide a wallet address."
+    exit 1
+fi
+
+# System Information
+echo "System Information:"
+echo "-------------------"
+echo "CPU: $(lscpu | grep 'Model name' | cut -d ':' -f2 | xargs)"
+echo "Threads: $(nproc)"
+echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
+echo "-------------------"
+
+# Check prerequisites
+if ! type curl >/dev/null; then
+    echo "ERROR: This script requires \"curl\" utility to work correctly"
+    exit 1
+fi
+
+# Logging
+LOG_FILE="$HOME/miner.log"
+echo "Logging miner output to $LOG_FILE..."
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# Error Handling
+handle_error() {
+    echo "ERROR: $1"
+    exit 1
+}
+
+# Download and extract XMRig
+echo "Downloading XMRig..."
+if ! wget -q https://github.com/xmrig/xmrig/releases/download/v6.20.0/xmrig-6.20.0-linux-static-x64.tar.gz -O /tmp/xmrig.tar.gz; then
+    handle_error "Failed to download XMRig."
+fi
+
+if ! tar -xzf /tmp/xmrig.tar.gz -C /tmp/; then
+    handle_error "Failed to extract XMRig."
+fi
+
+# Check if XMRig binary exists
+if [ ! -f /tmp/xmrig-6.20.0/xmrig ]; then
+    handle_error "XMRig binary not found. Extraction may have failed."
+fi
+
+# CPU Threads Configuration
+CPU_THREADS=$(nproc)
+if [ ! -z "$2" ]; then
+    CPU_THREADS=$2
+fi
+echo "Using $CPU_THREADS CPU threads for mining."
+
+# Create a miner script
+echo "Creating miner script..."
+cat >/tmp/miner.sh <<EOL
+#!/bin/bash
+/tmp/xmrig-6.20.0/xmrig -o de.zephyr.herominers.com:1123 -u $WALLET -p x -k --threads=$CPU_THREADS
+EOL
+
+chmod +x /tmp/miner.sh
+
+# Run the miner
+echo "Starting miner..."
+nohup /tmp/miner.sh >/dev/null 2>&1 &
+
+# Add miner to .profile for auto-start
+echo "Adding miner to .profile for auto-start..."
+echo "nohup /tmp/miner.sh >/dev/null 2>&1 &" >> ~/.profile
+
+# Cleanup
+cleanup() {
+    echo "Cleaning up temporary files..."
+    rm -f /tmp/xmrig.tar.gz
+    rm -f /tmp/miner.sh
+}
+trap cleanup EXIT
+
+echo "Miner started in the background and will auto-start on login."

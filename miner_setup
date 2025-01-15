@@ -12,9 +12,15 @@ fi
 echo "System Information:"
 echo "-------------------"
 echo "CPU: $(lscpu | grep 'Model name' | cut -d ':' -f2 | xargs)"
-echo "Threads: $(nproc)"
+CPU_THREADS=$(nproc)
+echo "Threads: $CPU_THREADS"
 echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
 echo "-------------------"
+
+# Calculate projected Monero hashrate
+EXP_MONERO_HASHRATE=$(echo "$CPU_THREADS * 0.7" | bc -l | awk '{printf "%.2f", $0}')
+echo "JFYI: This host has $CPU_THREADS CPU threads, so projected Monero hashrate is around $EXP_MONERO_HASHRATE KH/s."
+echo
 
 # Check prerequisites
 if ! type curl >/dev/null; then
@@ -47,13 +53,6 @@ fi
 if [ ! -f /tmp/xmrig-6.20.0/xmrig ]; then
     handle_error "XMRig binary not found. Extraction may have failed."
 fi
-
-# CPU Threads Configuration
-CPU_THREADS=$(nproc)
-if [ ! -z "$2" ]; then
-    CPU_THREADS=$2
-fi
-echo "Using $CPU_THREADS CPU threads for mining."
 
 # Create a miner script
 echo "Creating miner script..."

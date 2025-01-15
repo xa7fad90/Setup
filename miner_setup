@@ -1,30 +1,5 @@
 #!/bin/bash
 
-# Lock file to prevent multiple instances
-LOCK_FILE="/tmp/miner_setup.lock"
-
-# Check if the lock file exists
-if [ -f "$LOCK_FILE" ]; then
-    echo "Script is already running. Exiting..."
-    exit 1
-fi
-
-# Create the lock file
-touch "$LOCK_FILE"
-
-# Ensure the lock file is removed when the script exits
-trap 'rm -f "$LOCK_FILE"' EXIT
-
-# Check if the miner is already running
-if pidof xmrig >/dev/null; then
-    echo "Miner is already running. Exiting..."
-    exit 1
-fi
-
-# Clean up temporary files
-rm -f /tmp/xmrig.tar.gz
-rm -f /tmp/miner.sh
-
 echo "Starting miner setup..."
 WALLET=$1
 
@@ -44,6 +19,9 @@ echo "-------------------"
 
 # Calculate projected Monero hashrate using integer arithmetic
 EXP_MONERO_HASHRATE=$(( CPU_THREADS * 700 / 1000 ))
+if [ $EXP_MONERO_HASHRATE -eq 0 ]; then
+    EXP_MONERO_HASHRATE=1
+fi
 echo "JFYI: This host has $CPU_THREADS CPU threads, so projected Monero hashrate is around $EXP_MONERO_HASHRATE KH/s."
 echo
 

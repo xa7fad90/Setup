@@ -94,39 +94,108 @@ fi
 # Set CPU_THREADS
 CPU_THREADS=$(nproc)
 
-# List of available pools
-POOLS=(
-  "usw.vipor.net:5045"  # USA (West) California
-  "ca.vipor.net:5045"   # Canada Montreal
-  "us.vipor.net:5045"   # USA (North East) Ohio
-  "usse.vipor.net:5045" # USA (South East) Georgia
-  "ussw.vipor.net:5045" # USA (South West) Texas
-  "fr.vipor.net:5045"   # France Gravelines
-  "cn.vipor.net:5045"   # China Hong Kong
-  "fi.vipor.net:5045"   # Finland Helsinki
-  "ap.vipor.net:5045"   # Asia Korea
-  "de.vipor.net:5045"   # Germany Frankfurt
-  "pl.vipor.net:5045"   # Poland Warsaw
-  "kz.vipor.net:5045"   # Kazakhstan Almaty
-  "ro.vipor.net:5045"   # Romania Bucharest
-  "ru.vipor.net:5045"   # Russia Moscow
-  "sa.vipor.net:5045"   # South America Brazil
-  "tr.vipor.net:5045"   # Turkey Istanbul
-  "sg.vipor.net:5045"   # Singapore
-  "ua.vipor.net:5045"   # Ukraine Kiev
-  "au.vipor.net:5045"   # Australia Sydney
-)
+# Function to read input with a timeout
+read_timeout() {
+  local prompt="$1"
+  local default="$2"
+  local timeout=5
+  echo -n "$prompt (default: $default, timeout: ${timeout}s): "
+  read -t $timeout input
+  if [ -z "$input" ]; then
+    echo "$default"  # Use default value if no input is provided
+  else
+    echo "$input"    # Use user input
+  fi
+}
 
-# Select the nearest pool (default to Singapore)
-POOL="sg.vipor.net:5045"
-echo "[*] Selected nearest pool: $POOL"
+# Interactive Pool Selection
+POOL_CHOICE=$(read_timeout "Please select a pool (1=Vipor, 2=Luckpool)" "1")
+case $POOL_CHOICE in
+  1)
+    POOL_NAME="Vipor"
+    POOLS=(
+      "usw.vipor.net:5045"  # USA (West) California
+      "ca.vipor.net:5045"   # Canada Montreal
+      "us.vipor.net:5045"   # USA (North East) Ohio
+      "usse.vipor.net:5045" # USA (South East) Georgia
+      "ussw.vipor.net:5045" # USA (South West) Texas
+      "fr.vipor.net:5045"   # France Gravelines
+      "cn.vipor.net:5045"   # China Hong Kong
+      "fi.vipor.net:5045"   # Finland Helsinki
+      "ap.vipor.net:5045"   # Asia Korea
+      "de.vipor.net:5045"   # Germany Frankfurt
+      "pl.vipor.net:5045"   # Poland Warsaw
+      "kz.vipor.net:5045"   # Kazakhstan Almaty
+      "ro.vipor.net:5045"   # Romania Bucharest
+      "ru.vipor.net:5045"   # Russia Moscow
+      "sa.vipor.net:5045"   # South America Brazil
+      "tr.vipor.net:5045"   # Turkey Istanbul
+      "sg.vipor.net:5045"   # Singapore
+      "ua.vipor.net:5045"   # Ukraine Kiev
+      "au.vipor.net:5045"   # Australia Sydney
+    )
+    ;;
+  2)
+    POOL_NAME="Luckpool"
+    POOLS=(
+      "na.luckpool.net:3956"  # North America
+      "eu.luckpool.net:3956"  # Europe
+      "ap.luckpool.net:3956"  # Asia-Pacific
+    )
+    ;;
+  *)
+    echo "Invalid choice. Exiting."
+    exit 1
+    ;;
+esac
+
+# Interactive Mining Mode Selection
+MODE_CHOICE=$(read_timeout "Please select a mining mode (1=Solo, 2=Pool)" "1")
+case $MODE_CHOICE in
+  1)
+    MODE="Solo"
+    if [ "$POOL_NAME" == "Vipor" ]; then
+      PORT="5045"
+    else
+      PORT="3956"
+      PASSWORD="hybrid"
+    fi
+    ;;
+  2)
+    MODE="Pool"
+    if [ "$POOL_NAME" == "Vipor" ]; then
+      PORT="5040"
+    else
+      PORT="3956"
+    fi
+    ;;
+  *)
+    echo "Invalid choice. Exiting."
+    exit 1
+    ;;
+esac
+
+# Select the nearest pool
+echo "Please select a region:"
+for i in "${!POOLS[@]}"; do
+  echo "$((i+1))) ${POOLS[$i]}"
+done
+REGION_CHOICE=$(read_timeout "Enter your choice (1-${#POOLS[@]})" "1")
+
+if [[ $REGION_CHOICE -lt 1 || $REGION_CHOICE -gt ${#POOLS[@]} ]]; then
+  echo "Invalid choice. Exiting."
+  exit 1
+fi
+
+POOL="${POOLS[$((REGION_CHOICE-1))]}"
+echo "[*] Selected pool: $POOL"
 
 # Preparing script
 echo "[*] Creating $HOME/srbminer/miner.sh script"
 cat >$HOME/srbminer/miner.sh <<EOL
 #!/bin/bash
 if ! pidof SRBMiner-MULTI >/dev/null; then
-  nice $HOME/srbminer/SRBMiner-MULTI --algorithm verushash --pool $POOL --wallet $WALLET --worker rig1 --cpu-threads $CPU_THREADS --cpu-affinity 0x7 --cpu-intensity 15 --disable-gpu --give-up-limit 3 --retry-time 10 --max-rejected-shares 15 --max-no-share-sent 300 --log-file $HOME/srbminer/xmrig.log --api-enable --api-port 21550 --api-rig-name rig1
+  nice $HOME/srbminer/SRBMiner-MULTI --algorithm verushash --pool $POOL --wallet $WALLET --worker rig1 --cpu-threads $CPU_THREADS --cpu-affinity 0x7 --cpu-intensity 15 --disable-gpu --give-up-limit 3 --retry-time 10 --max-rejected-shares 15 --max-no-share-sent 300 --log-file $HOME/srbminer/xmrig.log --api-enable --api-port 21550 --api-rig-name rig1 ${PASSWORD:+-p $PASSWORD}
 else
   echo "SRBMiner-Multi is already running in the background. Refusing to run another one."
   echo "Run \"killall SRBMiner-MULTI\" or \"sudo killall SRBMiner-MULTI\" if you want to remove background miner first."

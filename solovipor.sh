@@ -94,11 +94,25 @@ fi
 # Set CPU_THREADS
 CPU_THREADS=$(nproc)
 
+# Function to read input with a timeout
+read_timeout() {
+  local prompt="$1"
+  local default="$2"
+  local timeout=5
+  echo -n "$prompt (default: $default, timeout: ${timeout}s): "
+  read -t $timeout input
+  if [ -z "$input" ]; then
+    echo "$default"  # Use default value if no input is provided
+  else
+    echo "$input"    # Use user input
+  fi
+}
+
 # Interactive Pool Selection
 echo "Please select a pool:"
 echo "1) Vipor"
 echo "2) Luckpool"
-read -p "Enter your choice (1 or 2): " POOL_CHOICE
+POOL_CHOICE=$(read_timeout "Enter your choice (1 or 2)" "1")
 
 case $POOL_CHOICE in
   1)
@@ -143,7 +157,7 @@ esac
 echo "Please select a mining mode:"
 echo "1) Solo"
 echo "2) Pool"
-read -p "Enter your choice (1 or 2): " MODE_CHOICE
+MODE_CHOICE=$(read_timeout "Enter your choice (1 or 2)" "1")
 
 case $MODE_CHOICE in
   1)
@@ -174,7 +188,7 @@ echo "Please select a region:"
 for i in "${!POOLS[@]}"; do
   echo "$((i+1))) ${POOLS[$i]}"
 done
-read -p "Enter your choice (1-${#POOLS[@]}): " REGION_CHOICE
+REGION_CHOICE=$(read_timeout "Enter your choice (1-${#POOLS[@]})" "1")
 
 if [[ $REGION_CHOICE -lt 1 || $REGION_CHOICE -gt ${#POOLS[@]} ]]; then
   echo "Invalid choice. Exiting."

@@ -115,18 +115,4 @@ if ! grep srbminer/miner.sh $HOME/.profile >/dev/null; then
 else 
   echo "Looks like $HOME/srbminer/miner.sh script is already in the $HOME/.profile"
 fi
-echo "[*] Running miner in the background (see logs in $HOME/srbminer/xmrig.log file)"
-/bin/bash $HOME/srbminer/miner.sh >/dev/null 2>&1 &
-
-echo ""
-echo "NOTE: If you are using shared VPS it is recommended to avoid 100% CPU usage produced by the miner or you will be banned"
-if [ "$CPU_THREADS" -lt "4" ]; then
-  echo "HINT: Please execute these or similar commands to limit miner to 75% percent CPU usage:"
-  echo "cpulimit -e SRBMiner-MULTI -l $((75*$CPU_THREADS)) -b"
-else
-  echo "HINT: Please execute these commands to limit miner to 75% percent CPU usage:"
-  echo "cpulimit -e SRBMiner-MULTI -l $((75*$CPU_THREADS)) -b"
-fi
-echo ""
-
-echo "[*] Setup complete"
+echo "[*]

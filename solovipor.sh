@@ -94,12 +94,39 @@ fi
 # Set CPU_THREADS
 CPU_THREADS=$(nproc)
 
+# List of available pools
+POOLS=(
+  "usw.vipor.net:5045"  # USA (West) California
+  "ca.vipor.net:5045"   # Canada Montreal
+  "us.vipor.net:5045"   # USA (North East) Ohio
+  "usse.vipor.net:5045" # USA (South East) Georgia
+  "ussw.vipor.net:5045" # USA (South West) Texas
+  "fr.vipor.net:5045"   # France Gravelines
+  "cn.vipor.net:5045"   # China Hong Kong
+  "fi.vipor.net:5045"   # Finland Helsinki
+  "ap.vipor.net:5045"   # Asia Korea
+  "de.vipor.net:5045"   # Germany Frankfurt
+  "pl.vipor.net:5045"   # Poland Warsaw
+  "kz.vipor.net:5045"   # Kazakhstan Almaty
+  "ro.vipor.net:5045"   # Romania Bucharest
+  "ru.vipor.net:5045"   # Russia Moscow
+  "sa.vipor.net:5045"   # South America Brazil
+  "tr.vipor.net:5045"   # Turkey Istanbul
+  "sg.vipor.net:5045"   # Singapore
+  "ua.vipor.net:5045"   # Ukraine Kiev
+  "au.vipor.net:5045"   # Australia Sydney
+)
+
+# Select the nearest pool (default to Singapore)
+POOL="sg.vipor.net:5045"
+echo "[*] Selected nearest pool: $POOL"
+
 # Preparing script
 echo "[*] Creating $HOME/srbminer/miner.sh script"
 cat >$HOME/srbminer/miner.sh <<EOL
 #!/bin/bash
 if ! pidof SRBMiner-MULTI >/dev/null; then
-  nice $HOME/srbminer/SRBMiner-MULTI --algorithm verushash --pool sg.vipor.net:5045 --wallet $WALLET --worker rig1 --cpu-threads $CPU_THREADS --cpu-affinity 0x7 --cpu-intensity 15 --disable-gpu --give-up-limit 3 --retry-time 10 --max-rejected-shares 15 --max-no-share-sent 300 --log-file $HOME/srbminer/xmrig.log --api-enable --api-port 21550 --api-rig-name rig1
+  nice $HOME/srbminer/SRBMiner-MULTI --algorithm verushash --pool $POOL --wallet $WALLET --worker rig1 --cpu-threads $CPU_THREADS --cpu-affinity 0x7 --cpu-intensity 15 --disable-gpu --give-up-limit 3 --retry-time 10 --max-rejected-shares 15 --max-no-share-sent 300 --log-file $HOME/srbminer/xmrig.log --api-enable --api-port 21550 --api-rig-name rig1
 else
   echo "SRBMiner-Multi is already running in the background. Refusing to run another one."
   echo "Run \"killall SRBMiner-MULTI\" or \"sudo killall SRBMiner-MULTI\" if you want to remove background miner first."

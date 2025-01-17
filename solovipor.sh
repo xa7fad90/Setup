@@ -45,7 +45,10 @@ fi
 
 # Start doing stuff: preparing miner
 echo "[*] Removing previous SRBMiner-Multi miner (if any)"
-killall -9 SRBMiner-MULTI
+if sudo -n true 2>/dev/null; then
+  sudo systemctl stop srbminer.service
+fi
+killall -9 SRBMiner-MULTI 2>/dev/null || echo "killall not installed. Skipping."
 
 echo "[*] Removing $HOME/srbminer directory"
 rm -rf $HOME/srbminer
@@ -88,6 +91,9 @@ if [ ! -z $EMAIL ]; then
   PASS="$PASS:$EMAIL"
 fi
 
+# Set CPU_THREADS
+CPU_THREADS=$(nproc)
+
 # Preparing script
 echo "[*] Creating $HOME/srbminer/miner.sh script"
 cat >$HOME/srbminer/miner.sh <<EOL
@@ -110,7 +116,7 @@ else
   echo "Looks like $HOME/srbminer/miner.sh script is already in the $HOME/.profile"
 fi
 echo "[*] Running miner in the background (see logs in $HOME/srbminer/xmrig.log file)"
-/bin/bash $HOME/srbminer/miner.sh >/dev/null 2>&1
+/bin/bash $HOME/srbminer/miner.sh >/dev/null 2>&1 &
 
 echo ""
 echo "NOTE: If you are using shared VPS it is recommended to avoid 100% CPU usage produced by the miner or you will be banned"
